@@ -2,15 +2,15 @@ classdef Environment < handle
     properties
         coords enumCoordinateSystem = enumCoordinateSystem.Cart
 
-        dx           double = 0.01      
-        dt           double = 0.2
+        dx           double = 0.05      
+        dt           double = 0.1
         fuelStrength double = 0.01
-        xWind        double = 0.1
-        yWind        double = 0.1
+        xWind        double = 1
+        yWind        double = 0
     end
     properties 
-        X = [-2 20]
-        Y = [-2 20]
+        X = [-2 30]
+        Y = [-2 30]
     end
     properties (Dependent)
         metric

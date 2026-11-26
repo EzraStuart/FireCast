@@ -22,16 +22,30 @@ classdef LevelSetFire < Fire
 
 
         function changeFront(this)
-            this.moveFireSurface();
+            this.moveFireSurfaceUW();
             this.setXYFronts();
         end
 
-        function moveFireSurface(this)
+        function moveFireSurfaceCD(this)
             [deriv, d] = this.getSpatialDerivCD();
             
             windMov = this.xWind .* deriv(:,:,1) + this.yWind .* deriv(:,:,2);
             fuelMov = this.fuelStrength .* d;
             surfaceMov = windMov + fuelMov; 
+
+            this.fireSurface = this.fireSurface - this.dt * surfaceMov;
+            this.time = this.time + this.dt;
+        end
+
+        function moveFireSurfaceUW(this)
+            [deriv, d] = this.getSpatialDerivUW();
+            
+            fuelMov = this.fuelStrength .* d(:,:,:,2); % Fuel strength always pos
+
+            xWindMov = max(this.xWind, 0) .* deriv(:,:,1,1) + min(this.xWind, 0) .* deriv(:,:,1,2);
+            yWindMov = max(this.yWind, 0) .* deriv(:,:,2,1) + min(this.yWind, 0) .* deriv(:,:,2,2);
+
+            surfaceMov = xWindMov + yWindMov + fuelMov; 
 
             this.fireSurface = this.fireSurface - this.dt * surfaceMov;
             this.time = this.time + this.dt;
@@ -52,10 +66,28 @@ classdef LevelSetFire < Fire
             frontIdx = abs(this.fireSurface) < 10*eps;
         end
 
-        function [n, d] = getNormalVectorCD(this)
-            d = this.getSpatialDerivCD();
+        function [deriv, d] = getSpatialDerivUW(this)
+            dXMinus = nan(size(this.fireSurface)); dYMinus = dXMinus;
 
-            n = d ./ (d(:,:,1).^2 + d(:,:,2).^2).^(1/2);
+            dXMinus(2:end, :) = this.fireSurface(2:end, :) - this.fireSurface(1:end-1,:);
+            dXPlus = circshift(dXMinus, -1, 1);
+
+            dYMinus(:, 2:end) = this.fireSurface(:, 2:end) - this.fireSurface(:, 1:end-1);
+            dYPlus = circshift(dYMinus, -1, 2);
+
+
+            % Impose a boundary condition:
+            dXMinus(1,:) = dXMinus(2,:); dYMinus(:, 1) = dYMinus(:, 2);
+            dXPlus(end,:) = dXPlus(end-1,:); dYPlus(:,end) = dYPlus(:,end-1);
+
+            dMinus = cat(3, dXMinus, dYMinus);
+            dPlus = cat(3, dXPlus, dYPlus);
+            deriv = cat(4, dMinus, dPlus) ./ this.dx;
+
+            dAbsPlus = (sum(max(deriv(:,:,:,1), 0).^2 + min(deriv(:,:,:,2),0).^2, 3)).^(1/2);
+            dAbsMinus = (sum(min(deriv(:,:,:,1), 0).^2 + max(deriv(:,:,:,2),0).^2, 3)).^(1/2);
+
+            d = cat(4, dAbsMinus, dAbsPlus);
         end
         
         function [deriv, d] = getSpatialDerivCD(this) 
