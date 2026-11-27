@@ -9,8 +9,8 @@ classdef Environment < handle
         yWind        double = 0
     end
     properties 
-        X = [-2 30]
-        Y = [-2 30]
+        X = [-3 3]
+        Y = [-3 3]
     end
     properties (Dependent)
         metric
@@ -65,6 +65,11 @@ classdef Environment < handle
             this.y = d(3):this.dx:d(4);
 
             [this.X, this.Y] = ndgrid(this.x, this.y);
+        end
+
+        function setWind(this, windVec)
+            this.xWind = windVec(1);
+            this.yWind = windVec(2);
         end
     end
     methods (Static)
