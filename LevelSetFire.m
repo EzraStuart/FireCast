@@ -42,10 +42,14 @@ classdef LevelSetFire < Fire
             
             fuelMov = this.fuelStrength .* d(:,:,:,2); % Fuel strength always pos
 
+            % w dot grad
             xWindMov = max(this.xWind, 0) .* deriv(:,:,1,1) + min(this.xWind, 0) .* deriv(:,:,1,2);
             yWindMov = max(this.yWind, 0) .* deriv(:,:,2,1) + min(this.yWind, 0) .* deriv(:,:,2,2);
 
-            surfaceMov = xWindMov + yWindMov + fuelMov; 
+            % Enforce entropy condition
+            windMov = max(xWindMov + yWindMov, 0);
+
+            surfaceMov = windMov + fuelMov; 
 
             this.fireSurface = this.fireSurface - this.dt * surfaceMov;
             this.time = this.time + this.dt;

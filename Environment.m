@@ -5,7 +5,7 @@ classdef Environment < handle
         dx           double = 0.05      
         dt           double = 0.1
         fuelStrength double = 0.01
-        xWind        double = 1
+        xWind        double = 0.05
         yWind        double = 0
     end
     properties 
